@@ -105,7 +105,7 @@ G <- G[rownames(Y_list[[1]]), rownames(Y_list[[1]])]
 diag(G) <- 0
 
 # ---------------------------------------------------------------
-# 2). INITIALISATIONS: X, beta, alpha, r, rho, lambda, gamma, theta
+# 2). INITIALISATIONS: X, beta, alpha, r, rho, gamma, theta
 # ---------------------------------------------------------------
 
 make_dissimilarity <- function(Y) {
@@ -210,8 +210,6 @@ init_gt <- init_gamma_theta_from_Y(Y_list, include_diagonal = FALSE)
 gamma_vec <- init_gt$gamma_init
 theta_vec <- init_gt$theta_init
 
-lambda_vec <- rep(1.0, T_years)  
-mu_lambda <- 1.0     
 
 # ---------------------------------------------------------------
 # 3). HYPERPARAMETERS 
@@ -227,7 +225,6 @@ sigma2_rwX <- 1
 sigma_a <- 0.5
 sigma2_gamma <- 1
 sigma2_theta <- 1
-sigma2_lambda <- 1.0 
 
 prop_sd_X <- 0.15
 prop_sd_alpha <- 0.3
@@ -236,7 +233,6 @@ prop_sd_rho <- 0.05
 prop_sd_r <- 0.05
 prop_sd_gamma <- 0.1
 prop_sd_theta <- 0.09
-prop_sd_lambda <- 0.15
 
 Y_mean <- Reduce("+", Y_list) / length(Y_list)
 out_degree <- rowSums(Y_mean)
@@ -256,12 +252,11 @@ res_molt_geo_offset <- mcmc_molt_geo_offset(
   X_list_R = X_list,
   W_list_R = W_list,
   G = G,                   
-  logE_list_R = logE_list_opt2,
+  logE_list_R = logE_list,
   alpha_vec = alpha_vec,
   beta_vec = beta_vec,
   rho_vec = rho_vec,        
   r_vec = r_vec,
-  lambda_vec = lambda_vec,
   gamma_vec = gamma_vec,
   theta_vec = theta_vec,
   sigma2_alpha = sigma2_alpha,
@@ -269,7 +264,6 @@ res_molt_geo_offset <- mcmc_molt_geo_offset(
   sigma2_rho = sigma2_rho,  
   sigma2_gamma = sigma2_gamma,
   sigma2_theta = sigma2_theta,
-  sigma2_lambda = sigma2_lambda,
   n_iter = n_iter,
   burn_in = burn_in,
   prop_sd_X = prop_sd_X,
@@ -279,13 +273,11 @@ res_molt_geo_offset <- mcmc_molt_geo_offset(
   prop_sd_r = prop_sd_r,
   prop_sd_gamma = prop_sd_gamma,
   prop_sd_theta = prop_sd_theta,
-  prop_sd_lambda = prop_sd_lambda,
   sigma2 = sigma2_rwX,
   sigma_a = sigma_a,
   mu_alpha = mu_alpha,
   mu_beta = mu_beta,
   mu_rho = mu_rho,           
-  mu_lambda = mu_lambda, 
   sender_ref = sender_ref,
   receiver_ref = receiver_ref,
   include_diagonal = FALSE,
@@ -360,7 +352,7 @@ ppc_results_molt_geo_offset <- ppc_all_years_MOLT_GEO_OFFSET(
   res = res_molt_geo_offset,
   W_list = W_list,
   G = G,                  
-  logE_list = logE_list_opt2,  
+  logE_list = logE_list,  
   n_sim = 500,
   verbose = TRUE
 )
