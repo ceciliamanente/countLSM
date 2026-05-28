@@ -1,4 +1,4 @@
-# NBHurdleLSMDN
+# countLSM
 This repository makes the results from "A Dynamic Latent Space Model for Healthcare Mobility Networks: the Italian National Health Service case" reproducible.
 
 There are two directories: `cpp` contains the C++ source code for the MCMC samplers, and `R` contains the R scripts used to run the models and reproduce the analyses.
