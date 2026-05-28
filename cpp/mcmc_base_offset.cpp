@@ -76,7 +76,6 @@ inline void logistic_hurdle(double beta_t,
 double hurdle_loglik_cell(double y,
                           double d_ij,
                           double logE_ij,   
-                          double lambda_t,    
                           double alpha_t,
                           double r_t,
                           double log_pi,
@@ -84,7 +83,7 @@ double hurdle_loglik_cell(double y,
   
   if (!std::isfinite(y) || y < 0) return 0.0;
   
-  double logM = lambda_t * logE_ij + alpha_t - d_ij;  
+  double logM = logE_ij + alpha_t - d_ij;  
   double M = std::exp(logM);
   
   auto logf_nb = [&](double yval)->double{
@@ -116,7 +115,6 @@ double hurdle_loglik_one_year(const arma::mat& Y,
                               const arma::mat& D,
                               const arma::mat& W,
                               const arma::mat& logE,  
-                              double lambda_t,
                               double alpha_t,
                               double beta_t,
                               double r_t,
@@ -140,7 +138,7 @@ double hurdle_loglik_one_year(const arma::mat& Y,
       double dij = D(i,j);
       double logE_ij = logE(i,j);
       
-      ll += hurdle_loglik_cell(y, dij, logE_ij, lambda_t,
+      ll += hurdle_loglik_cell(y, dij, logE_ij, 
                                alpha_t, r_t,
                                log_pi, log1m_pi);
     }
@@ -153,7 +151,6 @@ double mh_update_alpha(const arma::mat& Y,
                        const arma::mat& D,
                        const arma::mat& W, 
                        const arma::mat& logE,  
-                       double lambda_t,
                        double alpha_t,
                        double beta_t,
                        double r_t,
@@ -162,14 +159,14 @@ double mh_update_alpha(const arma::mat& Y,
                        double prop_sd,
                        bool include_diagonal) {
   
-  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_t, beta_t, r_t, include_diagonal);
   
   double lp_old = -0.5 * std::pow(alpha_t - mu_alpha, 2) / sigma2_alpha;
   
   double alpha_new = alpha_t + R::rnorm(0.0, prop_sd);
   
-  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_new, beta_t, r_t, include_diagonal);
   
   double lp_new = -0.5 * std::pow(alpha_new - mu_alpha, 2) / sigma2_alpha;
@@ -186,7 +183,6 @@ double mh_update_beta(const arma::mat& Y,
                       const arma::mat& D,
                       const arma::mat& W, 
                       const arma::mat& logE,  
-                      double lambda_t,
                       double beta_t,
                       double alpha_t,
                       double r_t,
@@ -195,14 +191,14 @@ double mh_update_beta(const arma::mat& Y,
                       double prop_sd, 
                       bool include_diagonal) {
   
-  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_t, beta_t, r_t, include_diagonal);
   
   double lp_old = -0.5 * std::pow(beta_t - mu_beta, 2) / sigma2_beta;
   
   double beta_new = beta_t + R::rnorm(0.0, prop_sd);
   
-  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_t, beta_new, r_t, include_diagonal);
   
   double lp_new = -0.5 * std::pow(beta_new - mu_beta, 2) / sigma2_beta;
@@ -220,7 +216,6 @@ double mh_update_r_halfnormal(const arma::mat& Y,
                               const arma::mat& D,
                               const arma::mat& W,
                               const arma::mat& logE,  
-                              double lambda_t,
                               double alpha_t,
                               double beta_t,
                               double r_t,
@@ -234,11 +229,11 @@ double mh_update_r_halfnormal(const arma::mat& Y,
   
   double r_new = 1.0 / (a_new * a_new);
   
-  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_t, beta_t, r_t,
                                          include_diagonal);
   
-  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE, 
                                          alpha_t, beta_t, r_new,
                                          include_diagonal);
   
@@ -264,7 +259,6 @@ bool mh_update_Xi(const arma::mat& Y,
                   arma::mat& D_t,
                   int t_idx,
                   int i,
-                  double lambda_t,
                   double alpha_t,
                   double beta_t,
                   double r_t,
@@ -296,9 +290,9 @@ bool mh_update_Xi(const arma::mat& Y,
     double logE_ij = logE_t(i,j);
     double logE_ji = logE_t(j,i);
     
-    ll_old += hurdle_loglik_cell(y_ij, d_ij, logE_ij, lambda_t, alpha_t, r_t, log_pi, log1m_pi);
+    ll_old += hurdle_loglik_cell(y_ij, d_ij, logE_ij, alpha_t, r_t, log_pi, log1m_pi);
     
-    ll_old += hurdle_loglik_cell(y_ji, d_ji, logE_ji, lambda_t, alpha_t, r_t, log_pi, log1m_pi);
+    ll_old += hurdle_loglik_cell(y_ji, d_ji, logE_ji, alpha_t, r_t, log_pi, log1m_pi);
   }
   
   arma::rowvec Xi_old = X_t.row(i); 
@@ -342,8 +336,8 @@ bool mh_update_Xi(const arma::mat& Y,
     double logE_ij = logE_t(i,j);
     double logE_ji = logE_t(j,i);
     
-    ll_new += hurdle_loglik_cell(y_ij, dij_new, logE_ij, lambda_t, alpha_t, r_t, log_pi, log1m_pi);
-    ll_new += hurdle_loglik_cell(y_ji, dij_new, logE_ji, lambda_t, alpha_t, r_t, log_pi, log1m_pi);
+    ll_new += hurdle_loglik_cell(y_ij, dij_new, logE_ij, alpha_t, r_t, log_pi, log1m_pi);
+    ll_new += hurdle_loglik_cell(y_ji, dij_new, logE_ji, alpha_t, r_t, log_pi, log1m_pi);
   }
   
   double lp_new = 0.0;
@@ -393,7 +387,6 @@ int mh_update_X_year(const arma::mat& Y,
                      const arma::mat& W,
                      const arma::mat& logE_t,  
                      int t_idx,
-                     double lambda_t,
                      double alpha_t,
                      double beta_t,
                      double r_t,
@@ -409,7 +402,6 @@ int mh_update_X_year(const arma::mat& Y,
                            D_t,
                            t_idx,
                            i,
-                           lambda_t,
                            alpha_t,
                            beta_t,
                            r_t,
@@ -436,7 +428,6 @@ arma::vec mh_update_r_joint_halfnormal(
     const std::vector<arma::mat>& D_list,
     const std::vector<arma::mat>& W_list,
     const std::vector<arma::mat>& logE_list,   
-    const arma::vec& lambda_vec, 
     const arma::vec& r_vec,
     const arma::vec& alpha_vec,
     const arma::vec& beta_vec,
@@ -460,12 +451,12 @@ arma::vec mh_update_r_joint_halfnormal(
   
   for (int t=0; t<Tn; t++) {
     ll_old += hurdle_loglik_one_year(
-      Y_list[t], X_list[t], D_list[t], W_list[t], logE_list[t], lambda_vec(t),
+      Y_list[t], X_list[t], D_list[t], W_list[t], logE_list[t],
       alpha_vec(t), beta_vec(t), r_vec(t),
       include_diagonal);
     
     ll_new += hurdle_loglik_one_year(
-      Y_list[t], X_list[t], D_list[t], W_list[t], logE_list[t], lambda_vec(t),
+      Y_list[t], X_list[t], D_list[t], W_list[t], logE_list[t],
       alpha_vec(t), beta_vec(t), r_new(t),
       include_diagonal);
   }
@@ -491,40 +482,6 @@ arma::vec mh_update_r_joint_halfnormal(
   return r_vec;
 }
 
-double mh_update_lambda(const arma::mat& Y,
-                        const arma::mat& X,
-                        const arma::mat& D,
-                        const arma::mat& W,
-                        const arma::mat& logE,
-                        double lambda_t,
-                        double alpha_t,
-                        double beta_t,
-                        double r_t,
-                        double mu_lambda,      
-                        double sigma2_lambda,  
-                        double prop_sd,
-                        bool include_diagonal) {
-  
-  double ll_old = hurdle_loglik_one_year(Y, X, D, W, logE,
-                                         lambda_t, alpha_t, beta_t, r_t, 
-                                         include_diagonal);
-  
-  double lp_old = -0.5 * std::pow(lambda_t - mu_lambda, 2) / sigma2_lambda;
-  
-  double lambda_new = lambda_t + R::rnorm(0.0, prop_sd);
-  
-  double ll_new = hurdle_loglik_one_year(Y, X, D, W, logE,
-                                         lambda_new, alpha_t, beta_t, r_t,
-                                         include_diagonal);
-  
-  double lp_new = -0.5 * std::pow(lambda_new - mu_lambda, 2) / sigma2_lambda;
-  
-  double log_acc = (ll_new + lp_new) - (ll_old + lp_old);
-  
-  if (std::log(R::runif(0.0,1.0)) < log_acc)
-    return lambda_new;
-  return lambda_t;
-}
 
 
 /* ==============================================================
@@ -539,11 +496,9 @@ List mcmc_base_offset(List Y_list_R,
                       arma::vec alpha_vec,
                       arma::vec beta_vec,
                       arma::vec r_vec,
-                      arma::vec lambda_vec, 
                       
                       double sigma2_alpha,
                       double sigma2_beta,
-                      double sigma2_lambda,   
                       
                       int n_iter,
                       int burn_in,
@@ -552,7 +507,6 @@ List mcmc_base_offset(List Y_list_R,
                       double prop_sd_alpha,
                       double prop_sd_beta,
                       double prop_sd_r,
-                      double prop_sd_lambda, 
                       
                       double sigma2,
                       
@@ -560,7 +514,6 @@ List mcmc_base_offset(List Y_list_R,
                       
                       double mu_alpha,          
                       double mu_beta,           
-                      double mu_lambda,    
                       
                       bool include_diagonal = false,
                       bool joint_update_r = false,
@@ -593,7 +546,6 @@ List mcmc_base_offset(List Y_list_R,
    -------------------------------------------------------------- */
   arma::mat alpha_save(n_save, Tn, fill::zeros);
   arma::mat beta_save (n_save, Tn, fill::zeros);
-  arma::mat lambda_save(n_save, Tn, fill::zeros);    
   
   arma::mat r_save    (n_save, Tn, fill::zeros);
   
@@ -607,7 +559,6 @@ List mcmc_base_offset(List Y_list_R,
   arma::ivec acc_X(Tn, fill::zeros),     trials_X(Tn, fill::zeros);
   arma::ivec acc_alpha(Tn, fill::zeros), trials_alpha(Tn, fill::zeros);
   arma::ivec acc_beta(Tn, fill::zeros),  trials_beta(Tn, fill::zeros);
-  arma::ivec acc_lambda(Tn, fill::zeros), trials_lambda(Tn, fill::zeros);
   arma::ivec acc_r(Tn, fill::zeros),     trials_r(Tn, fill::zeros);
   
   for (int iter = 1; iter <= n_iter; ++iter) {
@@ -622,7 +573,6 @@ List mcmc_base_offset(List Y_list_R,
                                        W_list[t],
                                              logE_list[t],
                                                       t,
-                                                      lambda_vec(t),    
                                                       alpha_vec(t),
                                                       beta_vec(t),
                                                       r_vec(t),
@@ -645,7 +595,6 @@ List mcmc_base_offset(List Y_list_R,
                                                D_list[t],
                                                      W_list[t],
                                                            logE_list[t],
-                                                                    lambda_vec(t), 
                                                                     alpha_old,
                                                                     beta_vec(t),
                                                                     r_vec(t),
@@ -672,7 +621,6 @@ List mcmc_base_offset(List Y_list_R,
                                              D_list[t],
                                                    W_list[t],
                                                          logE_list[t],
-                                                                  lambda_vec(t), 
                                                                   beta_old,
                                                                   alpha_vec(t),
                                                                   r_vec(t),
@@ -687,28 +635,6 @@ List mcmc_base_offset(List Y_list_R,
       beta_vec(t) = beta_new; 
     }
     
-    /* ------------------------------
-     Update lambda_t  
-     ------------------------------ */
-    for (int t = 0; t < Tn; ++t) {
-      double lambda_old = lambda_vec(t);
-      double lambda_new = mh_update_lambda(Y_list[t],
-                                           X_list[t],
-                                                 D_list[t],
-                                                       W_list[t],
-                                                             logE_list[t],
-                                                                      lambda_old,
-                                                                      alpha_vec(t),
-                                                                      beta_vec(t),
-                                                                      r_vec(t),
-                                                                      mu_lambda,
-                                                                      sigma2_lambda,
-                                                                      prop_sd_lambda,
-                                                                      include_diagonal);
-      if (lambda_new != lambda_old) acc_lambda(t)++;
-      trials_lambda(t)++;
-      lambda_vec(t) = lambda_new;
-    }
     
     /* ------------------------------
      Update r_t via a = 1/sqrt(r)
@@ -722,7 +648,6 @@ List mcmc_base_offset(List Y_list_R,
         mh_update_r_joint_halfnormal(
           Y_list, X_list, D_list, W_list,
           logE_list,
-          lambda_vec, 
           r_vec,
           alpha_vec,
           beta_vec,
@@ -749,7 +674,6 @@ List mcmc_base_offset(List Y_list_R,
                       D_list[t],
                             W_list[t],
                                   logE_list[t],
-                                           lambda_vec(t),
                                            alpha_vec(t),
                                            beta_vec(t),
                                            r_old,
@@ -776,10 +700,6 @@ List mcmc_base_offset(List Y_list_R,
         if (acc_rate_beta < 0.3) prop_sd_beta *= 0.8;
         else if (acc_rate_beta > 0.6) prop_sd_beta *= 1.2;
         
-        double acc_rate_lambda = (double)acc_lambda(t) / trials_lambda(t);
-        if (acc_rate_lambda < 0.3) prop_sd_lambda *= 0.8;
-        else if (acc_rate_lambda > 0.6) prop_sd_lambda *= 1.2;
-        
         double acc_rate_X = (double)acc_X(t) / trials_X(t); 
         if (acc_rate_X < 0.2) prop_sd_X *= 0.8;
         else if (acc_rate_X > 0.5) prop_sd_X *= 1.2;
@@ -790,7 +710,6 @@ List mcmc_base_offset(List Y_list_R,
         
         acc_alpha(t) = trials_alpha(t) = 0;
         acc_beta(t)  = trials_beta(t)  = 0;
-        acc_lambda(t) = trials_lambda(t) = 0;    
         acc_X(t)     = trials_X(t)     = 0;
         acc_r(t)     = trials_r(t)     = 0;
       }
@@ -804,7 +723,6 @@ List mcmc_base_offset(List Y_list_R,
       for (int t = 0; t < Tn; ++t) {
         total_ll += hurdle_loglik_one_year(
           Y_list[t], X_list[t], D_list[t], W_list[t], logE_list[t],
-                                                               lambda_vec(t),
                                                                alpha_vec(t), beta_vec(t), r_vec(t),
                                                                include_diagonal
         );
@@ -813,7 +731,6 @@ List mcmc_base_offset(List Y_list_R,
       
       alpha_save.row(idx) = alpha_vec.t();
       beta_save.row(idx)  = beta_vec.t();
-      lambda_save.row(idx) = lambda_vec.t();
       r_save.row(idx)     = r_vec.t();
       
       mu_alpha_save(idx)  = mu_alpha;
@@ -833,7 +750,6 @@ List mcmc_base_offset(List Y_list_R,
       << " | prop_sd_X=" << prop_sd_X
       << " | prop_sd_alpha=" << prop_sd_alpha
       << " | prop_sd_beta="  << prop_sd_beta
-      << " | prop_sd_lambda=" << prop_sd_lambda    
       << " | prop_sd_r="     << prop_sd_r
       << std::endl;
     }
@@ -841,7 +757,6 @@ List mcmc_base_offset(List Y_list_R,
   
   arma::vec alpha_hat = arma::mean(alpha_save, 0).t();
   arma::vec beta_hat  = arma::mean(beta_save, 0).t();
-  arma::vec lambda_hat = arma::mean(lambda_save, 0).t(); 
   arma::vec r_hat     = arma::mean(r_save, 0).t();
   
   double Dbar = -2.0 * arma::mean(loglik_save);
@@ -853,7 +768,7 @@ List mcmc_base_offset(List Y_list_R,
       Y_list[t],
             X_list[t],      
                   D_list[t],
-                        W_list[t], logE_list[t], lambda_hat(t), 
+                        W_list[t], logE_list[t],
                         alpha_hat(t),
                         beta_hat(t),
                         r_hat(t),
@@ -873,7 +788,6 @@ List mcmc_base_offset(List Y_list_R,
   return List::create(
     _["alpha_samples"]     = alpha_save,
     _["beta_samples"]      = beta_save,
-    _["lambda_samples"] = lambda_save, 
     _["r_samples"]         = r_save,
     _["mu_alpha_samples"]  = mu_alpha_save,
     _["mu_beta_samples"]   = mu_beta_save,
@@ -883,16 +797,13 @@ List mcmc_base_offset(List Y_list_R,
     
     _["sigma2_alpha_last"] = sigma2_alpha,
     _["sigma2_beta_last"]  = sigma2_beta,
-    _["sigma2_lambda_last"] = sigma2_lambda,
     
     _["mu_alpha_last"]     = mu_alpha,
     _["mu_beta_last"]      = mu_beta,
-    _["mu_lambda_last"] = mu_lambda, 
     
     _["prop_sd_X_last"]    = prop_sd_X,
     _["prop_sd_alpha_last"]= prop_sd_alpha,
     _["prop_sd_beta_last"] = prop_sd_beta,
-    _["prop_sd_lambda_last"] = prop_sd_lambda,
     _["prop_sd_r_last"]    = prop_sd_r,
     _["loglik_samples"] = loglik_save, 
     _["Dbar"] = Dbar,
