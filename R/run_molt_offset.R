@@ -100,7 +100,7 @@ for (yr in years) {
 
 
 # ---------------------------------------------------------------
-# 2). INITIALISATIONS: X, beta, alpha, r, gamma, theta, lambda
+# 2). INITIALISATIONS: X, beta, alpha, r, gamma, theta
 # ---------------------------------------------------------------
 
 make_dissimilarity <- function(Y) {
@@ -207,9 +207,6 @@ init_gt  <- init_gamma_theta_from_Y(Y_list, include_diagonal = FALSE)
 gamma_vec <- init_gt$gamma_init
 theta_vec <- init_gt$theta_init
 
-lambda_vec <- rep(1.0, n_years)
-mu_lambda  <- 1.0
-
 
 Y_mean       <- Reduce("+", Y_list) / length(Y_list)
 out_degree   <- rowSums(Y_mean)
@@ -230,7 +227,6 @@ sigma2_rwX    <- 1.0
 sigma_a       <- 0.5
 sigma2_gamma  <- 1.0
 sigma2_theta  <- 1.0
-sigma2_lambda <- 1.0
 
 prop_sd_X      <- 0.15
 prop_sd_alpha  <- 0.3
@@ -238,7 +234,6 @@ prop_sd_beta   <- 0.3
 prop_sd_r      <- 0.05
 prop_sd_gamma  <- 0.1
 prop_sd_theta  <- 0.3
-prop_sd_lambda <- 0.15
 
 # ---------------------------------------------------------------
 # 4). MCMC
@@ -255,7 +250,6 @@ res_molt_offset <- mcmc_moltiplicativo_offset(
   alpha_vec  = alpha_vec,
   beta_vec   = beta_vec,
   r_vec      = r_vec,
-  lambda_vec = lambda_vec,
   gamma_vec  = gamma_vec,
   theta_vec  = theta_vec,
   
@@ -263,7 +257,6 @@ res_molt_offset <- mcmc_moltiplicativo_offset(
   sigma2_beta   = sigma2_beta,
   sigma2_gamma  = sigma2_gamma,
   sigma2_theta  = sigma2_theta,
-  sigma2_lambda = sigma2_lambda,
   
   n_iter  = n_iter,
   burn_in = burn_in,
@@ -274,14 +267,12 @@ res_molt_offset <- mcmc_moltiplicativo_offset(
   prop_sd_r      = prop_sd_r,
   prop_sd_gamma  = prop_sd_gamma,
   prop_sd_theta  = prop_sd_theta,
-  prop_sd_lambda = prop_sd_lambda,
   
   sigma2  = sigma2_rwX,
   sigma_a = sigma_a,
   
   mu_alpha  = mu_alpha,
   mu_beta   = mu_beta,
-  mu_lambda = mu_lambda,
   
   sender_ref   = sender_ref,
   receiver_ref = receiver_ref,
@@ -304,7 +295,6 @@ beta_samples   <- res_molt_offset$beta_samples
 r_samples      <- res_molt_offset$r_samples
 gamma_samples  <- res_molt_offset$gamma_samples
 theta_samples  <- res_molt_offset$theta_samples
-lambda_samples <- res_molt_offset$lambda_samples
 
 plot_traceplots <- function(samples, param_name, year_names, color = "darkred") {
   n_years <- ncol(samples)
@@ -322,7 +312,6 @@ plot_traceplots <- function(samples, param_name, year_names, color = "darkred") 
 plot_traceplots(alpha_samples,  "alpha",  names(Y_list), "darkred")
 plot_traceplots(beta_samples,   "beta",   names(Y_list), "purple")
 plot_traceplots(r_samples,      "r",      names(Y_list), "steelblue")
-plot_traceplots(lambda_samples, "lambda", names(Y_list), "pink")
 
 par(mfrow = c(2, 3))
 for (i in 1:6) {
