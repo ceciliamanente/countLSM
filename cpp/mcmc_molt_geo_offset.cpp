@@ -61,7 +61,6 @@ inline void logistic_hurdle_eta(double eta,
 double hurdle_loglik_cell(double y,
                           double d_ij,
                           double logE_ij,
-                          double lambda_t,  
                           double alpha_t,
                           double r_t,
                           double gamma_i,
@@ -70,7 +69,7 @@ double hurdle_loglik_cell(double y,
                           double log1m_pi) {
   if (!std::isfinite(y) || y < 0) return 0.0;
   
-  double logM = lambda_t * logE_ij + alpha_t * ((gamma_i + theta_j) / 2.0) - d_ij;  
+  double logM = logE_ij + alpha_t * ((gamma_i + theta_j) / 2.0) - d_ij;  
   double M = std::exp(logM);
   
   auto logf_nb = [&](double yval)->double{
@@ -99,7 +98,6 @@ double hurdle_loglik_one_year(const arma::mat& Y,
                               const arma::mat& G,
                               const arma::mat& W,
                               const arma::mat& logE,
-                              double lambda_t,  
                               double alpha_t,
                               double beta_t,
                               double rho_t,
@@ -124,7 +122,7 @@ double hurdle_loglik_one_year(const arma::mat& Y,
       double pi_ij, log_pi, log1m_pi;
       logistic_hurdle_eta(eta, pi_ij, log_pi, log1m_pi);
       
-      ll += hurdle_loglik_cell(y, dij, logE_ij, lambda_t,  
+      ll += hurdle_loglik_cell(y, dij, logE_ij,  
                                alpha_t, r_t,
                                gamma_i, theta_vec(j),
                                log_pi, log1m_pi);
@@ -138,7 +136,6 @@ double mh_update_alpha(const arma::mat& Y,
                        const arma::mat& G,
                        const arma::mat& W,
                        const arma::mat& logE,
-                       double lambda_t,  
                        double alpha_t,
                        double beta_t,
                        double rho_t,
@@ -149,7 +146,7 @@ double mh_update_alpha(const arma::mat& Y,
                        double sigma2_alpha,
                        double prop_sd,
                        bool include_diagonal) {
-  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -157,7 +154,7 @@ double mh_update_alpha(const arma::mat& Y,
   
   double alpha_new = alpha_t + R::rnorm(0.0, prop_sd);
   
-  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_new, beta_t, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -173,7 +170,6 @@ double mh_update_beta(const arma::mat& Y,
                       const arma::mat& G,
                       const arma::mat& W,
                       const arma::mat& logE,
-                      double lambda_t,  
                       double beta_t,
                       double alpha_t,
                       double rho_t,
@@ -184,7 +180,7 @@ double mh_update_beta(const arma::mat& Y,
                       double sigma2_beta,
                       double prop_sd,
                       bool include_diagonal) {
-  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -192,7 +188,7 @@ double mh_update_beta(const arma::mat& Y,
   
   double beta_new = beta_t + R::rnorm(0.0, prop_sd);
   
-  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_new, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -208,7 +204,6 @@ double mh_update_rho(const arma::mat& Y,
                      const arma::mat& G,
                      const arma::mat& W,
                      const arma::mat& logE,
-                     double lambda_t,  
                      double rho_t,
                      double alpha_t,
                      double beta_t,
@@ -219,7 +214,7 @@ double mh_update_rho(const arma::mat& Y,
                      double sigma2_rho,
                      double prop_sd,
                      bool include_diagonal) {
-  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -227,7 +222,7 @@ double mh_update_rho(const arma::mat& Y,
   
   double rho_new = rho_t + R::rnorm(0.0, prop_sd);
   
-  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_new, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -238,47 +233,12 @@ double mh_update_rho(const arma::mat& Y,
   return rho_t;
 }
 
-double mh_update_lambda(const arma::mat& Y,
-                        const arma::mat& D,
-                        const arma::mat& G,
-                        const arma::mat& W,
-                        const arma::mat& logE,
-                        double lambda_t,
-                        double alpha_t,
-                        double beta_t,
-                        double rho_t,
-                        double r_t,
-                        const arma::vec& gamma_vec,
-                        const arma::vec& theta_vec,
-                        double mu_lambda,
-                        double sigma2_lambda,
-                        double prop_sd,
-                        bool include_diagonal) {
-  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
-                                         alpha_t, beta_t, rho_t, r_t,
-                                         gamma_vec, theta_vec,
-                                         include_diagonal);
-  double lp_old = -0.5 * std::pow(lambda_t - mu_lambda, 2) / sigma2_lambda;
-  
-  double lambda_new = lambda_t + R::rnorm(0.0, prop_sd);
-  
-  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_new,
-                                         alpha_t, beta_t, rho_t, r_t,
-                                         gamma_vec, theta_vec,
-                                         include_diagonal);
-  double lp_new = -0.5 * std::pow(lambda_new - mu_lambda, 2) / sigma2_lambda;
-  
-  double log_acc = (ll_new + lp_new) - (ll_old + lp_old);
-  if (std::log(R::runif(0.0, 1.0)) < log_acc) return lambda_new;
-  return lambda_t;
-}
 
 double mh_update_r_halfnormal(const arma::mat& Y,
                               const arma::mat& D,
                               const arma::mat& G,
                               const arma::mat& W,
                               const arma::mat& logE,
-                              double lambda_t,  
                               double alpha_t,
                               double beta_t,
                               double rho_t,
@@ -292,11 +252,11 @@ double mh_update_r_halfnormal(const arma::mat& Y,
   double a_new = std::fabs(a_old + R::rnorm(0.0, prop_sd_a));
   double r_new = 1.0 / (a_new * a_new);
   
-  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_old = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_t, r_t,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
-  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE, lambda_t,
+  double ll_new = hurdle_loglik_one_year(Y, D, G, W, logE,
                                          alpha_t, beta_t, rho_t, r_new,
                                          gamma_vec, theta_vec,
                                          include_diagonal);
@@ -318,7 +278,6 @@ arma::vec mh_update_r_joint_halfnormal(
     const std::vector<arma::mat>& G_list,
     const std::vector<arma::mat>& W_list,
     const std::vector<arma::mat>& logE_list,
-    const arma::vec& lambda_vec,  
     const arma::vec& r_vec,
     const arma::vec& alpha_vec,
     const arma::vec& beta_vec,
@@ -342,13 +301,11 @@ arma::vec mh_update_r_joint_halfnormal(
   for (int t=0; t<Tn; t++) {
     ll_old += hurdle_loglik_one_year(
       Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                                           lambda_vec(t),  
                                                            alpha_vec(t), beta_vec(t), rho_vec(t), r_vec(t),
                                                            gamma_vec, theta_vec, include_diagonal
     );
     ll_new += hurdle_loglik_one_year(
       Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                                           lambda_vec(t),  
                                                            alpha_vec(t), beta_vec(t), rho_vec(t), r_new(t),
                                                            gamma_vec, theta_vec, include_diagonal
     );
@@ -378,7 +335,6 @@ bool mh_update_Xi(const arma::mat& Y,
                   int i,
                   const arma::mat& G,
                   const arma::mat& logE_t,
-                  double lambda_t,  
                   double alpha_t,
                   double beta_t,
                   double rho_t,
@@ -409,11 +365,11 @@ bool mh_update_Xi(const arma::mat& Y,
     double pi_ji, log_pi_ji, log1m_pi_ji;
     logistic_hurdle_eta(beta_t + rho_t * G(j,i), pi_ji, log_pi_ji, log1m_pi_ji);
     
-    ll_old += hurdle_loglik_cell(y_ij, d_ij, logE_ij, lambda_t,  
+    ll_old += hurdle_loglik_cell(y_ij, d_ij, logE_ij,  
                                  alpha_t, r_t,
                                  gamma_vec(i), theta_vec(j),
                                  log_pi_ij, log1m_pi_ij);
-    ll_old += hurdle_loglik_cell(y_ji, d_ij, logE_ji, lambda_t,  
+    ll_old += hurdle_loglik_cell(y_ji, d_ij, logE_ji,  
                                  alpha_t, r_t,
                                  gamma_vec(j), theta_vec(i),
                                  log_pi_ji, log1m_pi_ji);
@@ -458,11 +414,11 @@ bool mh_update_Xi(const arma::mat& Y,
     double pi_ji, log_pi_ji, log1m_pi_ji;
     logistic_hurdle_eta(beta_t + rho_t * G(j,i), pi_ji, log_pi_ji, log1m_pi_ji);
     
-    ll_new += hurdle_loglik_cell(y_ij, dij_new, logE_ij, lambda_t,  
+    ll_new += hurdle_loglik_cell(y_ij, dij_new, logE_ij,  
                                  alpha_t, r_t,
                                  gamma_vec(i), theta_vec(j),
                                  log_pi_ij, log1m_pi_ij);
-    ll_new += hurdle_loglik_cell(y_ji, dij_new, logE_ji, lambda_t,  
+    ll_new += hurdle_loglik_cell(y_ji, dij_new, logE_ji,  
                                  alpha_t, r_t,
                                  gamma_vec(j), theta_vec(i),
                                  log_pi_ji, log1m_pi_ji);
@@ -507,7 +463,6 @@ int mh_update_X_year(const arma::mat& Y,
                      const arma::mat& W,
                      const arma::mat& logE_t,
                      int t_idx,
-                     double lambda_t,  
                      double alpha_t,
                      double beta_t,
                      double rho_t,
@@ -521,7 +476,6 @@ int mh_update_X_year(const arma::mat& Y,
   
   for (int i = 0; i < n; ++i) {
     bool ok = mh_update_Xi(Y, X_list, D_t, t_idx, i, G, logE_t,
-                           lambda_t,  
                            alpha_t, beta_t, rho_t, r_t,
                            gamma_vec, theta_vec, W,
                            prop_sd, sigma2);
@@ -542,7 +496,6 @@ double loglik_gamma_i_allT(const std::vector<arma::mat>& Y_list,
                            const std::vector<arma::mat>& G_list,
                            const std::vector<arma::mat>& W_list,
                            const std::vector<arma::mat>& logE_list,
-                           const arma::vec& lambda_vec,  
                            const arma::vec& alpha_vec,
                            const arma::vec& beta_vec,
                            const arma::vec& rho_vec,
@@ -562,7 +515,6 @@ double loglik_gamma_i_allT(const std::vector<arma::mat>& Y_list,
     const arma::mat& W = W_list[t];
     const arma::mat& logE = logE_list[t];
     
-    double lambda_t = lambda_vec(t);  
     double alpha_t = alpha_vec(t);
     double beta_t = beta_vec(t);
     double rho_t = rho_vec(t);
@@ -579,7 +531,7 @@ double loglik_gamma_i_allT(const std::vector<arma::mat>& Y_list,
         double pi, log_pi, log1m_pi;
         logistic_hurdle_eta(beta_t + rho_t * G(i_node, j), pi, log_pi, log1m_pi);
         
-        out += hurdle_loglik_cell(y_ij, d_ij, logE_ij, lambda_t,  
+        out += hurdle_loglik_cell(y_ij, d_ij, logE_ij,  
                                   alpha_t, r_t,
                                   gamma_i, theta_vec(j),
                                   log_pi, log1m_pi);
@@ -591,7 +543,7 @@ double loglik_gamma_i_allT(const std::vector<arma::mat>& Y_list,
         double pi, log_pi, log1m_pi;
         logistic_hurdle_eta(beta_t + rho_t * G(j, i_node), pi, log_pi, log1m_pi);
         
-        out += hurdle_loglik_cell(y_ji, d_ij, logE_ji, lambda_t,  
+        out += hurdle_loglik_cell(y_ji, d_ij, logE_ji,  
                                   alpha_t, r_t,
                                   gamma_vec(j), theta_vec(i_node),
                                   log_pi, log1m_pi);
@@ -606,7 +558,6 @@ double loglik_theta_j_allT(const std::vector<arma::mat>& Y_list,
                            const std::vector<arma::mat>& G_list,
                            const std::vector<arma::mat>& W_list,
                            const std::vector<arma::mat>& logE_list,
-                           const arma::vec& lambda_vec,  
                            const arma::vec& alpha_vec,
                            const arma::vec& beta_vec,
                            const arma::vec& rho_vec,
@@ -626,7 +577,6 @@ double loglik_theta_j_allT(const std::vector<arma::mat>& Y_list,
     const arma::mat& W = W_list[t];
     const arma::mat& logE = logE_list[t];
     
-    double lambda_t = lambda_vec(t);  
     double alpha_t = alpha_vec(t);
     double beta_t = beta_vec(t);
     double rho_t = rho_vec(t);
@@ -643,7 +593,7 @@ double loglik_theta_j_allT(const std::vector<arma::mat>& Y_list,
         double pi, log_pi, log1m_pi;
         logistic_hurdle_eta(beta_t + rho_t * G(i, j_node), pi, log_pi, log1m_pi);
         
-        out += hurdle_loglik_cell(y_ij, d_ij, logE_ij, lambda_t,  
+        out += hurdle_loglik_cell(y_ij, d_ij, logE_ij,  
                                   alpha_t, r_t,
                                   gamma_vec(i), theta_j,
                                   log_pi, log1m_pi);
@@ -655,7 +605,7 @@ double loglik_theta_j_allT(const std::vector<arma::mat>& Y_list,
         double pi, log_pi, log1m_pi;
         logistic_hurdle_eta(beta_t + rho_t * G(j_node, i), pi, log_pi, log1m_pi);
         
-        out += hurdle_loglik_cell(y_ji, d_ij, logE_ji, lambda_t,  
+        out += hurdle_loglik_cell(y_ji, d_ij, logE_ji,  
                                   alpha_t, r_t,
                                   gamma_vec(j_node), theta_vec(i),
                                   log_pi, log1m_pi);
@@ -670,7 +620,6 @@ double mh_update_gamma_i_allT(const std::vector<arma::mat>& Y_list,
                               const std::vector<arma::mat>& G_list,
                               const std::vector<arma::mat>& W_list,
                               const std::vector<arma::mat>& logE_list,
-                              const arma::vec& lambda_vec,  
                               const arma::vec& alpha_vec,
                               const arma::vec& beta_vec,
                               const arma::vec& rho_vec,
@@ -684,7 +633,6 @@ double mh_update_gamma_i_allT(const std::vector<arma::mat>& Y_list,
   double g_old = gamma_vec(i_node);
   
   double ll_old = loglik_gamma_i_allT(Y_list, D_list, G_list, W_list, logE_list,
-                                      lambda_vec,  
                                       alpha_vec, beta_vec, rho_vec, r_vec,
                                       gamma_vec, theta_vec,
                                       i_node, include_diagonal);
@@ -694,7 +642,6 @@ double mh_update_gamma_i_allT(const std::vector<arma::mat>& Y_list,
   gamma_vec(i_node) = g_new;
   
   double ll_new = loglik_gamma_i_allT(Y_list, D_list, G_list, W_list, logE_list,
-                                      lambda_vec,  
                                       alpha_vec, beta_vec, rho_vec, r_vec,
                                       gamma_vec, theta_vec,
                                       i_node, include_diagonal);
@@ -712,7 +659,6 @@ double mh_update_theta_j_allT(const std::vector<arma::mat>& Y_list,
                               const std::vector<arma::mat>& G_list,
                               const std::vector<arma::mat>& W_list,
                               const std::vector<arma::mat>& logE_list,
-                              const arma::vec& lambda_vec,  
                               const arma::vec& alpha_vec,
                               const arma::vec& beta_vec,
                               const arma::vec& rho_vec,
@@ -726,7 +672,6 @@ double mh_update_theta_j_allT(const std::vector<arma::mat>& Y_list,
   double th_old = theta_vec(j_node);
   
   double ll_old = loglik_theta_j_allT(Y_list, D_list, G_list, W_list, logE_list,
-                                      lambda_vec,  
                                       alpha_vec, beta_vec, rho_vec, r_vec,
                                       gamma_vec, theta_vec,
                                       j_node, include_diagonal);
@@ -736,7 +681,6 @@ double mh_update_theta_j_allT(const std::vector<arma::mat>& Y_list,
   theta_vec(j_node) = th_new;
   
   double ll_new = loglik_theta_j_allT(Y_list, D_list, G_list, W_list, logE_list,
-                                      lambda_vec,  
                                       alpha_vec, beta_vec, rho_vec, r_vec,
                                       gamma_vec, theta_vec,
                                       j_node, include_diagonal);
@@ -761,14 +705,12 @@ List mcmc_molt_geo_offset(List Y_list_R,
                           arma::vec alpha_vec,
                           arma::vec beta_vec,
                           arma::vec rho_vec,
-                          arma::vec lambda_vec,  
                           arma::vec r_vec,
                           arma::vec gamma_vec,
                           arma::vec theta_vec,
                           double sigma2_alpha,
                           double sigma2_beta,
                           double sigma2_rho,
-                          double sigma2_lambda,  
                           double sigma2_gamma,
                           double sigma2_theta,
                           int n_iter,
@@ -777,7 +719,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
                           double prop_sd_alpha,
                           double prop_sd_beta,
                           double prop_sd_rho,
-                          double prop_sd_lambda,  
                           double prop_sd_r,
                           double prop_sd_gamma,
                           double prop_sd_theta,
@@ -786,7 +727,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
                           double mu_alpha,
                           double mu_beta,
                           double mu_rho,
-                          double mu_lambda,  
                           int sender_ref,
                           int receiver_ref,
                           bool include_diagonal = false,
@@ -828,7 +768,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
   arma::mat alpha_save(n_save, Tn, fill::zeros);
   arma::mat beta_save (n_save, Tn, fill::zeros);
   arma::mat rho_save  (n_save, Tn, fill::zeros);
-  arma::mat lambda_save(n_save, Tn, fill::zeros);  
   arma::mat r_save    (n_save, Tn, fill::zeros);
   arma::mat gamma_save(n_save, n_nodes, fill::zeros);
   arma::mat theta_save(n_save, n_nodes, fill::zeros);
@@ -836,7 +775,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
   arma::vec mu_alpha_save(n_save, fill::zeros);
   arma::vec mu_beta_save (n_save, fill::zeros);
   arma::vec mu_rho_save  (n_save, fill::zeros);
-  arma::vec mu_lambda_save(n_save, fill::zeros);  
   
   List X_save(n_save);
   arma::vec loglik_save(n_save, fill::zeros);
@@ -845,7 +783,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
   arma::ivec acc_alpha(Tn, fill::zeros), trials_alpha(Tn, fill::zeros);
   arma::ivec acc_beta(Tn, fill::zeros), trials_beta(Tn, fill::zeros);
   arma::ivec acc_rho(Tn, fill::zeros), trials_rho(Tn, fill::zeros);
-  arma::ivec acc_lambda(Tn, fill::zeros), trials_lambda(Tn, fill::zeros);  
   arma::ivec acc_r(Tn, fill::zeros), trials_r(Tn, fill::zeros);
   arma::ivec acc_gamma(n_nodes, fill::zeros), trials_gamma(n_nodes, fill::zeros);
   arma::ivec acc_theta(n_nodes, fill::zeros), trials_theta(n_nodes, fill::zeros);
@@ -861,7 +798,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
                                              W_list[t],
                                                    logE_list[t],
                                                             t,
-                                                            lambda_vec(t),  
                                                             alpha_vec(t),
                                                             beta_vec(t),
                                                             rho_vec(t),
@@ -878,7 +814,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
     for (int t = 0; t < Tn; ++t) {
       double oldv = alpha_vec(t);
       double newv = mh_update_alpha(Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                    lambda_vec(t),  
                                     oldv, beta_vec(t), rho_vec(t), r_vec(t),
                                     gamma_vec, theta_vec,
                                     mu_alpha, sigma2_alpha,
@@ -892,7 +827,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
     for (int t = 0; t < Tn; ++t) {
       double oldv = beta_vec(t);
       double newv = mh_update_beta(Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                   lambda_vec(t),  
                                    oldv, alpha_vec(t), rho_vec(t), r_vec(t),
                                    gamma_vec, theta_vec,
                                    mu_beta, sigma2_beta,
@@ -906,7 +840,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
     for (int t = 0; t < Tn; ++t) {
       double oldv = rho_vec(t);
       double newv = mh_update_rho(Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                  lambda_vec(t),  
                                   oldv, alpha_vec(t), beta_vec(t), r_vec(t),
                                   gamma_vec, theta_vec,
                                   mu_rho, sigma2_rho,
@@ -916,18 +849,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       rho_vec(t) = newv;
     }
     
-    // --- Update lambda_t 
-    for (int t = 0; t < Tn; ++t) {
-      double oldv = lambda_vec(t);
-      double newv = mh_update_lambda(Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                     oldv, alpha_vec(t), beta_vec(t), rho_vec(t), r_vec(t),
-                                     gamma_vec, theta_vec,
-                                     mu_lambda, sigma2_lambda,
-                                     prop_sd_lambda, include_diagonal);
-      if (newv != oldv) acc_lambda(t)++;
-      trials_lambda(t)++;
-      lambda_vec(t) = newv;
-    }
     
     // --- Update r_t
     if (joint_update_r) {
@@ -935,7 +856,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       arma::vec r_new_vec =
         mh_update_r_joint_halfnormal(
           Y_list, D_list, G_list, W_list, logE_list,
-          lambda_vec,  
           r_vec,
           alpha_vec,
           beta_vec,
@@ -956,7 +876,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
         double r_old = r_vec(t);
         double r_new = mh_update_r_halfnormal(
           Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                                               lambda_vec(t),  
                                                                alpha_vec(t), beta_vec(t), rho_vec(t), r_old,
                                                                gamma_vec, theta_vec,
                                                                prop_sd_r, sigma_a, include_diagonal
@@ -974,7 +893,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       double g_old = gamma_vec(i);
       double g_new = mh_update_gamma_i_allT(
         Y_list, D_list, G_list, W_list, logE_list,
-        lambda_vec,  
         alpha_vec, beta_vec, rho_vec, r_vec,
         gamma_vec, theta_vec,
         i, sigma2_gamma, prop_sd_gamma,
@@ -993,7 +911,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       double th_old = theta_vec(j);
       double th_new = mh_update_theta_j_allT(
         Y_list, D_list, G_list, W_list, logE_list,
-        lambda_vec,  
         alpha_vec, beta_vec, rho_vec, r_vec,
         gamma_vec, theta_vec,
         j, sigma2_theta, prop_sd_theta,
@@ -1019,9 +936,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
         if (ar_rh < 0.3) prop_sd_rho *= 0.8;
         else if (ar_rh > 0.6) prop_sd_rho *= 1.2;
         
-        double ar_lam = (double)acc_lambda(t) / trials_lambda(t);
-        if (ar_lam < 0.3) prop_sd_lambda *= 0.8;
-        else if (ar_lam > 0.6) prop_sd_lambda *= 1.2;
         
         double ar_X = (double)acc_X(t) / trials_X(t);
         if (ar_X < 0.2) prop_sd_X *= 0.8;
@@ -1034,7 +948,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
         acc_alpha(t) = trials_alpha(t) = 0;
         acc_beta(t) = trials_beta(t) = 0;
         acc_rho(t) = trials_rho(t) = 0;
-        acc_lambda(t) = trials_lambda(t) = 0;  
         acc_X(t) = trials_X(t) = 0;
         acc_r(t) = trials_r(t) = 0;
       }
@@ -1060,7 +973,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       for (int t = 0; t < Tn; ++t) {
         ll_tot += hurdle_loglik_one_year(
           Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                                               lambda_vec(t),  
                                                                alpha_vec(t), beta_vec(t), rho_vec(t), r_vec(t),
                                                                gamma_vec, theta_vec,
                                                                include_diagonal
@@ -1071,7 +983,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       alpha_save.row(idx) = alpha_vec.t();
       beta_save.row(idx) = beta_vec.t();
       rho_save.row(idx) = rho_vec.t();
-      lambda_save.row(idx) = lambda_vec.t();  
       r_save.row(idx) = r_vec.t();
       gamma_save.row(idx) = gamma_vec.t();
       theta_save.row(idx) = theta_vec.t();
@@ -1079,7 +990,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       mu_alpha_save(idx) = mu_alpha;
       mu_beta_save(idx) = mu_beta;
       mu_rho_save(idx) = mu_rho;
-      mu_lambda_save(idx) = mu_lambda;  
       
       List X_this_iter(Tn);
       for (int tt = 0; tt < Tn; ++tt) 
@@ -1094,7 +1004,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
       << " | prop_sd_alpha=" << prop_sd_alpha
       << " | prop_sd_beta=" << prop_sd_beta
       << " | prop_sd_rho=" << prop_sd_rho
-      << " | prop_sd_lambda=" << prop_sd_lambda  
       << " | prop_sd_r=" << prop_sd_r
       << " | prop_sd_gamma=" << prop_sd_gamma
       << " | prop_sd_theta=" << prop_sd_theta
@@ -1107,7 +1016,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
   arma::vec alpha_hat = arma::mean(alpha_save, 0).t();
   arma::vec beta_hat = arma::mean(beta_save, 0).t();
   arma::vec rho_hat = arma::mean(rho_save, 0).t();
-  arma::vec lambda_hat = arma::mean(lambda_save, 0).t();  
   arma::vec r_hat = arma::mean(r_save, 0).t();
   arma::vec gamma_hat = arma::mean(gamma_save, 0).t();
   arma::vec theta_hat = arma::mean(theta_save, 0).t();
@@ -1116,7 +1024,6 @@ List mcmc_molt_geo_offset(List Y_list_R,
   for (int t = 0; t < Tn; ++t) {
     ll_hat += hurdle_loglik_one_year(
       Y_list[t], D_list[t], G_list[t], W_list[t], logE_list[t],
-                                                           lambda_hat(t),  
                                                            alpha_hat(t), beta_hat(t), rho_hat(t), r_hat(t),
                                                            gamma_hat, theta_hat,
                                                            include_diagonal
@@ -1134,31 +1041,26 @@ List mcmc_molt_geo_offset(List Y_list_R,
     _["alpha_samples"] = alpha_save,
     _["beta_samples"] = beta_save,
     _["rho_samples"] = rho_save,
-    _["lambda_samples"] = lambda_save,  
     _["r_samples"] = r_save,
     _["gamma_samples"] = gamma_save,
     _["theta_samples"] = theta_save,
     _["mu_alpha_samples"] = mu_alpha_save,
     _["mu_beta_samples"] = mu_beta_save,
     _["mu_rho_samples"] = mu_rho_save,
-    _["mu_lambda_samples"] = mu_lambda_save,  
     _["X_last"] = X_out,
     _["X_samples"] = X_save,
     _["sigma2_alpha_last"] = sigma2_alpha,
     _["sigma2_beta_last"] = sigma2_beta,
     _["sigma2_rho_last"] = sigma2_rho,
-    _["sigma2_lambda_last"] = sigma2_lambda,  
     _["sigma2_gamma_last"] = sigma2_gamma,
     _["sigma2_theta_last"] = sigma2_theta,
     _["mu_alpha_last"] = mu_alpha,
     _["mu_beta_last"] = mu_beta,
     _["mu_rho_last"] = mu_rho,
-    _["mu_lambda_last"] = mu_lambda,  
     _["prop_sd_X_last"] = prop_sd_X,
     _["prop_sd_alpha_last"]= prop_sd_alpha,
     _["prop_sd_beta_last"] = prop_sd_beta,
     _["prop_sd_rho_last"] = prop_sd_rho,
-    _["prop_sd_lambda_last"] = prop_sd_lambda,  
     _["prop_sd_gamma_last"]= prop_sd_gamma,
     _["prop_sd_theta_last"]= prop_sd_theta,
     _["prop_sd_r_last"] = prop_sd_r,
