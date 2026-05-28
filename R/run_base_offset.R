@@ -98,7 +98,7 @@ for (yr in years) {
 }
 
 # ---------------------------------------------------------------
-# 2). INITIALISATIONS: X, beta, alpha, r, lambda
+# 2). INITIALISATIONS: X, beta, alpha, r
 # ---------------------------------------------------------------
 
 make_dissimilarity <- function(Y) {
@@ -172,9 +172,6 @@ mu_beta  <- mean(sapply(Y_list, function(Y) {
   qlogis(p)
 }))
 
-lambda_vec <- rep(1.0, n_years)
-mu_lambda  <- 1.0
-
 # ---------------------------------------------------------------
 # 3). HYPERPARAMETERS 
 # ---------------------------------------------------------------
@@ -184,14 +181,12 @@ burn_in <- 20000
 
 sigma2_alpha  <- 5.0
 sigma2_beta   <- 1.0
-sigma2_lambda <- 1.0
 sigma2_rwX    <- 1.0
 sigma_a       <- 0.5
 
 prop_sd_X      <- 0.15
 prop_sd_alpha  <- 0.3
 prop_sd_beta   <- 0.3
-prop_sd_lambda <- 0.15
 prop_sd_r      <- 0.05
 
 # ---------------------------------------------------------------
@@ -210,11 +205,9 @@ res_base_offset <- mcmc_base_offset(
   alpha_vec  = alpha_vec,
   beta_vec   = beta_vec,
   r_vec      = r_vec,
-  lambda_vec = lambda_vec,
   
   sigma2_alpha  = sigma2_alpha,
   sigma2_beta   = sigma2_beta,
-  sigma2_lambda = sigma2_lambda,
   
   n_iter  = n_iter,
   burn_in = burn_in,
@@ -223,14 +216,12 @@ res_base_offset <- mcmc_base_offset(
   prop_sd_alpha  = prop_sd_alpha,
   prop_sd_beta   = prop_sd_beta,
   prop_sd_r      = prop_sd_r,
-  prop_sd_lambda = prop_sd_lambda,
   
   sigma2  = sigma2_rwX,
   sigma_a = sigma_a,
   
   mu_alpha  = mu_alpha,
   mu_beta   = mu_beta,
-  mu_lambda = mu_lambda,
   
   include_diagonal = FALSE,
   joint_update_r   = TRUE,
@@ -248,7 +239,6 @@ res_base_offset$DIC
 alpha_samples  <- res_base_offset$alpha_samples
 beta_samples   <- res_base_offset$beta_samples
 r_samples      <- res_base_offset$r_samples
-lambda_samples <- res_base_offset$lambda_samples
 
 plot_traceplots <- function(samples, param_name, year_names, color = "darkred") {
   n_years <- ncol(samples)
@@ -266,7 +256,6 @@ plot_traceplots <- function(samples, param_name, year_names, color = "darkred") 
 plot_traceplots(alpha_samples,  "alpha",  names(Y_list), "darkred")
 plot_traceplots(beta_samples,   "beta",   names(Y_list), "purple")
 plot_traceplots(r_samples,      "r",      names(Y_list), "steelblue")
-plot_traceplots(lambda_samples, "lambda", names(Y_list), "darkgreen")
 
 # ---------------------------------------------------------------
 # 6). PPC
