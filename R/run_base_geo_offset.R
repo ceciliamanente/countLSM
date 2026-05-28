@@ -110,7 +110,7 @@ diag(G) <- 0
 
 
 # ---------------------------------------------------------------
-# 2). INITIALISATIONS: X, beta, alpha, r, rho, lambda
+# 2). INITIALISATIONS: X, beta, alpha, r, rho
 # ---------------------------------------------------------------
 
 make_dissimilarity <- function(Y) {
@@ -185,9 +185,6 @@ mu_beta  <- mean(sapply(Y_list, function(Y) {
   qlogis(p)
 }))
 
-lambda_vec <- rep(1.0, n_years)
-mu_lambda  <- 1.0
-
 rho_vec <- rep(0, n_years)
 mu_rho <- 0
 
@@ -204,14 +201,12 @@ sigma2_beta <- 1.0
 sigma2_rho <- 1.0    
 sigma2_rwX <- 1.0
 sigma_a <- 0.5
-sigma2_lambda <- 1.0 
 
 prop_sd_X <- 0.15
 prop_sd_alpha <- 0.3
 prop_sd_beta <- 0.3
 prop_sd_rho <- 0.05  
 prop_sd_r <- 0.05
-prop_sd_lambda <- 0.15
 
 # ---------------------------------------------------------------
 # 4). MCMC
@@ -224,19 +219,17 @@ res_base_geo_offset <- mcmc_base_geo_offset(
   X_list_R = X_list,
   W_list_R = W_list,
   
-  logE_list_R = logE_list_opt2,  
+  logE_list_R = logE_list,  
   G = G,      
   
   alpha_vec = alpha_vec,
   beta_vec = beta_vec,
   rho_vec = rho_vec,         
   r_vec = r_vec,
-  lambda_vec = lambda_vec,
   
   sigma2_alpha = sigma2_alpha,
   sigma2_beta = sigma2_beta,
   sigma2_rho = sigma2_rho,
-  sigma2_lambda = sigma2_lambda,
   
   n_iter = n_iter,
   burn_in = burn_in,
@@ -246,7 +239,6 @@ res_base_geo_offset <- mcmc_base_geo_offset(
   prop_sd_beta = prop_sd_beta,
   prop_sd_rho = prop_sd_rho, 
   prop_sd_r = prop_sd_r,
-  prop_sd_lambda = prop_sd_lambda,
   
   sigma2 = sigma2_rwX,
   sigma_a = sigma_a,
@@ -254,7 +246,6 @@ res_base_geo_offset <- mcmc_base_geo_offset(
   mu_alpha = mu_alpha,
   mu_beta = mu_beta,
   mu_rho = mu_rho,   
-  mu_lambda = mu_lambda, 
   
   include_diagonal = FALSE,
   joint_update_r = TRUE,
@@ -275,7 +266,6 @@ rho_samples <- res_base_geo_offset$rho_samples
 r_samples <- res_base_geo_offset$r_samples
 X_last <- res_base_geo_offset$X_last
 X_samples <- res_base_geo_offset$X_samples
-lambda_samples <- res_base_geo_offset$lambda_samples
 
 plot_traceplots <- function(samples, param_name, year_names, color = "darkred") {
   n_years <- ncol(samples)
@@ -303,9 +293,6 @@ plot_traceplots(r_samples, "r", names(Y_list), "steelblue")
 plot_traceplots(rho_samples, "rho", names(Y_list), "darkgreen")
 
 
-# Lambda
-plot_traceplots(lambda_samples, "lambda", names(Y_list), "orange")
-
 # ---------------------------------------------------------------
 # 6). PPC
 # ---------------------------------------------------------------
@@ -317,7 +304,7 @@ ppc_results_base_geo_offset <- ppc_all_years_BASE_GEO_OFFSET(
   res = res_base_geo_offset,
   W_list = W_list,
   G = G,
-  logE_list = logE_list_opt2,
+  logE_list = logE_list,
   n_sim = 500
 )
 
