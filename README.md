@@ -1,30 +1,50 @@
 # countLSM
-This repository makes the results from "A Dynamic Latent Space Model for Healthcare Mobility Networks: the Italian National Health Service case" reproducible.
 
-There are two directories: `cpp` contains the C++ source code for the MCMC samplers, and `R` contains the R scripts used to run the models and reproduce the analyses.
+R and C++ implementation of the dynamic latent space model with hurdle negative binomial likelihood proposed in:
 
-The two subdirectories are described in more detail below.
+> Manente, C., Alfò, M., and D'Angelo, S. (2025). *A Dynamic Latent Space Model for Healthcare Mobility Networks: the Italian National Health Service case*. 
+
+## Repository structure
+
+The repository contains two directories:
+
+- `cpp/` — C++ source code for the MCMC samplers (interfaced with R via RcppArmadillo)
+- `R/` — R scripts to fit each model variant and reproduce the analyses in the paper
 
 ## cpp
-In this directory, the C++ source code for all MCMC samplers can be found. Each file corresponds to a different model variant:
 
-- `mcmc_base.cpp` — baseline model
-- `mcmc_base_geo.cpp` — baseline model with geographical distance 
-- `mcmc_base_offset.cpp` — baseline model with exposure adjustment
-- `mcmc_base_geo_offset.cpp` — baseline model with geographical distance and exposure adjustment term
-- `mcmc_molt.cpp` — multiplicative sender/receiver effects model
-- `mcmc_molt_geo.cpp` — multiplicative model with geographical distance 
-- `mcmc_molt_offset.cpp` — multiplicative model with exposure adjustment term
-- `mcmc_molt_geo_offset.cpp` — multiplicative model with geographical distance and exposure adjustment term
+Each file implements a Metropolis-within-Gibbs sampler for a different model specification:
+
+| File | Description |
+|------|-------------|
+| `mcmc_base.cpp` | Baseline model |
+| `mcmc_base_geo.cpp` | Baseline + geographical distance |
+| `mcmc_base_offset.cpp` | Baseline + exposure offset |
+| `mcmc_base_geo_offset.cpp` | Baseline + geographical distance + exposure offset |
+| `mcmc_molt.cpp` | Multiplicative sender/receiver effects |
+| `mcmc_molt_geo.cpp` | Multiplicative + geographical distance |
+| `mcmc_molt_offset.cpp` | Multiplicative + exposure offset |
+| `mcmc_molt_geo_offset.cpp` | Multiplicative + geographical distance + exposure offset |
 
 ## R
-In this directory, the R scripts used to fit each model to the Italian healthcare mobility data can be found:
 
-- `run_base.R` — fits the baseline model
-- `run_base_geo.R` — fits the baseline model with geographical distance
-- `run_base_offset.R` — fits the baseline model with exposure adjustment term 
-- `run_base_geo_offset.R` — fits the baseline model with geographical distance and exposure adjustment term
-- `run_molt.R` — fits the multiplicative model
-- `run_molt_geo.R` — fits the multiplicative model with geographical distance
-- `run_molt_offset.R` — fits the multiplicative model with exposure adjustment term 
-- `run_molt_geo_offset.R` — fits the multiplicative model with geographical distance and exposure adjustment term
+Each script loads the data, initialises the parameters, calls the corresponding C++ sampler via Rcpp, and saves the posterior samples:
+
+| File | Description |
+|------|-------------|
+| `run_base.R` | Baseline model |
+| `run_base_geo.R` | Baseline + geographical distance |
+| `run_base_offset.R` | Baseline + exposure offset |
+| `run_base_geo_offset.R` | Baseline + geographical distance + exposure offset |
+| `run_molt.R` | Multiplicative sender/receiver effects |
+| `run_molt_geo.R` | Multiplicative + geographical distance |
+| `run_molt_offset.R` | Multiplicative + exposure offset |
+| `run_molt_geo_offset.R` | Multiplicative + geographical distance + exposure offset |
+
+## Dependencies
+
+The C++ code requires [RcppArmadillo](https://cran.r-project.org/package=RcppArmadillo). The R scripts require the following packages: `Rcpp`, `RcppArmadillo`, `MASS`, `ggplot2`, `dplyr`, `vegan`.
+
+## Data availability
+
+The data used in the paper are administrative hospital discharge records held by the Italian Ministry of Health and AGENAS. Access is subject to institutional data agreements and cannot be shared publicly.
