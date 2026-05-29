@@ -1,8 +1,6 @@
 # countLSM
 
-R and C++ implementation of the dynamic latent space model with hurdle negative binomial likelihood proposed in:
-
-> Manente, C., Alfò, M., and D'Angelo, S. (2026). *A Dynamic Latent Space Model for Healthcare Mobility Networks: the Italian National Health Service case*. 
+This repository makes the results from *A Dynamic Latent Space Model for Healthcare Mobility Networks: the Italian National Health Service case* (Manente, C., Alfò, M., and D'Angelo, S.) reproducible.
 
 ## Repository structure
 
